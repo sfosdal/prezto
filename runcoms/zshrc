@@ -1,13 +1,209 @@
-#
-# Executes commands at the start of an interactive session.
-#
-# Authors:
-#   Sorin Ionescu <sorin.ionescu@gmail.com>
-#
-
-# Source Prezto.
+##########  prezto  ##########
 if [[ -s "${ZDOTDIR:-$HOME}/.zprezto/init.zsh" ]]; then
   source "${ZDOTDIR:-$HOME}/.zprezto/init.zsh"
 fi
+[[ ! -f ~/.p10k.zsh ]] || source ~/.p10k.zsh
 
-# Customize to your needs...
+
+
+##########  VERBOSE ALIAS  ##########
+function verbose_alias {
+  local name=${1%%=*} expansion=${1#*=}
+  eval "function $name {
+    printf >&2 '%s\\n' \"$expansion\";
+    $expansion \"\$@\";
+  }"
+}
+
+
+
+##########  history  ##########
+_history(){
+	if [ $# -eq 1 ]; then
+        # echo "$1"
+        history -E -1000000 | grep -v '  h ' | grep -iE $1
+	else
+        history -E -1000000 | grep -v '  h '
+	fi
+}
+alias h=_history
+
+
+
+##########  history  ##########
+function ec2-ip() {
+  AWS_PROFILE=main-map-admin aws ec2 --region=us-$2-2 describe-instances --filters "Name=tag:Name,Values=$1" | jq -r '.Reservations[].Instances[] | .NetworkInterfaces[].PrivateIpAddress'
+}
+
+
+
+##########  better history  ##########
+setopt INC_APPEND_HISTORY
+setopt EXTENDED_HISTORY
+setopt HIST_FIND_NO_DUPS
+setopt HIST_IGNORE_ALL_DUPS
+export HISTFILE=~/.zsh_history
+export HISTFILESIZE=1000000000
+export HISTSIZE=1000000000
+export HISTTIMEFORMAT="[%F %T] "
+
+
+
+##########  iterm shell integration https://iterm2.com/documentation-shell-integration.html  ##########
+test -e "${HOME}/.iterm2_shell_integration.zsh" && source "${HOME}/.iterm2_shell_integration.zsh" || true
+
+
+
+##########  jenv: https://www.jenv.be/  ##########
+export PATH="$HOME/.jenv/bin:$PATH"
+eval "$(jenv init -)"
+
+
+
+##########  direnv: https://direnv.net/  ##########
+eval "$(direnv hook zsh)"
+
+
+
+##########  brew ruby  ##########
+export PATH="/usr/local/opt/ruby/bin:$PATH"
+export LDFLAGS="-L/usr/local/opt/ruby/lib"
+export CPPFLAGS="-I/usr/local/opt/ruby/include"
+export PKG_CONFIG_PATH="/usr/local/opt/ruby/lib/pkgconfig"
+
+
+
+##########  brew completions: https://docs.brew.sh/Shell-Completion#configuring-completions-in-zsh  ##########
+if type brew &>/dev/null; then
+	FPATH=$(brew --prefix)/share/zsh/site-functions:$FPATH
+	autoload -Uz compinit
+	compinit
+fi
+
+
+
+##########  Node Version MAnager  ##########
+export NVM_DIR="$HOME/.nvm"
+[ -s "$NVM_DIR/nvm.sh" ] && . "$NVM_DIR/nvm.sh"  # This loads nvm
+[ -s "$NVM_DIR/bash_completion" ] && . "$NVM_DIR/bash_completion"  # This loads nvm bash_completion
+
+
+
+##########  VARIOUS PATH  ##########
+export PATH="$HOME/bin:$PATH"
+export PATH="${PATH}:${HOME}/.krew/bin"
+export PATH="/usr/local/opt/openjdk@8/bin:$PATH"
+export PATH="/usr/local/opt/openjdk/bin:$PATH"
+export PATH="/usr/local/opt/openjdk@11/bin:$PATH"
+
+export JFROG_USERNAME=sfosdal
+export JFROG_ENCRYPTED_PASSWORD=AP8MV6SzVLzSK9E3qaVR2SrX5LeZ9v9r5RadCC
+
+export VALET_USERNAME=sfosdal
+export VALET_MFA=push
+export VALET_TEAM=eng-data-eng
+#export VALET_LAUNCH_BROWSER=false
+export LARNACA_HOME=~/_/repos/larnaca
+export AWS_PROFILE=main-map-admin
+#export AWS_DEFAULT_REGION=US-EAST-1
+export OKTA_USERNAME=sfosdal
+export SBT_OPTS="-Xmx4G -Xms1G -XX:+UseG1GC"
+
+
+
+
+##########  valet  ##########
+verbose_alias v='valet --username sfosdal --assume-subroles --no-launch-browser --save-password' # For command-line access, legacy AWS SDKs
+verbose_alias vc='valet --username sfosdal --save-password' # For aws console online
+verbose_alias vr='valet --username sfosdal --redshift'
+
+##########  commit dot-files  ##########
+alias dot-files='/usr/local/bin/git --git-dir=$HOME/.dot-files.git/ --work-tree=$HOME'
+
+##########  misc  ##########
+alias gpr='git pull --recurse-submodules'
+verbose_alias deepCleanIntelliJ='rm -rf .idea && find . -type d -name target -prune -exec rm -r {} +'
+verbose_alias grpc-ui='kubectl port-forward deployment/grpc-ui 6969:6969'
+verbose_alias grpc-ui-alt='kubectl port-forward deployment/grpc-ui 6970:6969'
+verbose_alias kube-staging='kubectl ctx main-staging-custom && kubectl ns staging'
+verbose_alias kube-production='kubectl ctx main-production-custom-public && kubectl ns production'
+
+
+
+#####
+#####
+##### All DevBao below here
+#####
+#####
+
+
+
+# BEGIN DEVBAO MANAGED BLOCK FOR zsh shell completion
+autoload -Uz compinit
+compinit
+# END DEVBAO MANAGED BLOCK FOR zsh shell completion
+
+
+# BEGIN DEVBAO MANAGED BLOCK FOR KUBECTL
+source <(kubectl completion zsh)
+alias k=kubectl
+complete -F __start_kubectl k
+# END DEVBAO MANAGED BLOCK FOR KUBECTL
+
+
+
+# BEGIN DEVBAO MANAGED BLOCK FOR Python user-site path
+PATH=/Users/sfosdal/Library/Python/3.9/bin:$PATH
+# END DEVBAO MANAGED BLOCK FOR Python user-site path
+
+# BEGIN DEVBAO MANAGED BLOCK FOR user's local bin
+export PATH=~/.local/bin:$PATH
+# END DEVBAO MANAGED BLOCK FOR user's local bin
+
+# BEGIN DEVBAO MANAGED BLOCK FOR zsh shell completion
+autoload -Uz compinit
+compinit
+# END DEVBAO MANAGED BLOCK FOR zsh shell completion
+
+# BEGIN DEVBAO MANAGED BLOCK FOR KUBECONFIG ENV VAR
+export KUBECONFIG=~/.kube/config:$(ls -d ~/.kube/config.d/* | python -c 'import sys; print(":".join([l.strip() for l in sys.stdin]).strip())')
+# END DEVBAO MANAGED BLOCK FOR KUBECONFIG ENV VAR
+
+# BEGIN DEVBAO MANAGED BLOCK for kubectl
+source <(kubectl completion zsh)
+alias k=kubectl
+complete -F __start_kubectl k
+# END DEVBAO MANAGED BLOCK for kubectl
+
+# BEGIN DEVBAO MANAGED BLOCK for kustomize
+source <(/Users/sfosdal/.local/bin/kustomize completion zsh)
+compdef _kustomize kustomize
+# END DEVBAO MANAGED BLOCK for kustomize
+
+# >>> conda initialize >>>
+# !! Contents within this block are managed by 'conda init' !!
+__conda_setup="$('/Users/sfosdal/anaconda3/bin/conda' 'shell.zsh' 'hook' 2> /dev/null)"
+if [ $? -eq 0 ]; then
+    eval "$__conda_setup"
+else
+    if [ -f "/Users/sfosdal/anaconda3/etc/profile.d/conda.sh" ]; then
+        . "/Users/sfosdal/anaconda3/etc/profile.d/conda.sh"
+    else
+        export PATH="/Users/sfosdal/anaconda3/bin:$PATH"
+    fi
+fi
+unset __conda_setup
+# <<< conda initialize <<<
+
+# BEGIN DEVBAO MANAGED BLOCK FOR KREW
+export PATH="${KREW_ROOT:-$HOME/.krew}/bin:$PATH"
+# END DEVBAO MANAGED BLOCK FOR KREW
+
+
+
+conda activate tubi
+
+
+
+##### New stuff below here
+
